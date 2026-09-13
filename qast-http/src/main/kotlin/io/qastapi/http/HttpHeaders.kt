@@ -51,6 +51,7 @@ open class HttpHeaders(
         const val ACCESS_CONTROL_ALLOW_HEADERS = "Access-Control-Allow-Headers"
         const val ACCESS_CONTROL_ALLOW_CREDENTIALS = "Access-Control-Allow-Credentials"
         const val ACCESS_CONTROL_MAX_AGE = "Access-Control-Max-Age"
+        const val X_REQUEST_ID = "X-Request-ID"
     }
 }
 

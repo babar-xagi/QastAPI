@@ -141,6 +141,7 @@ class QastApp(
 
     private fun printBanner(boundPort: Int) {
         val totalRoutes = router.allRoutes().size
+        val profile = io.qastapi.core.Environment.currentProfile()
         val banner = """
             
    ____             _      _    ____ ___ 
@@ -151,6 +152,8 @@ class QastApp(
  QastAPI v0.1.0 (Kotlin / JVM)
 
  ✓ Config loaded (${config.project.name} v${config.project.version})
+ ✓ Environment: ${config.environment.identifier} (profile: $profile)
+ ✓ Logging: ${config.logging.format.name.lowercase()}
  ✓ Engine: ${engine.name}
  ✓ $totalRoutes routes registered
 

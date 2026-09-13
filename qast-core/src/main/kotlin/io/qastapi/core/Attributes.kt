@@ -12,6 +12,8 @@ class Attributes {
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> get(key: AttributeKey<T>): T? = map[key] as? T
 
+    fun <T : Any> getOrNull(key: AttributeKey<T>): T? = get(key)
+
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> getOrPut(key: AttributeKey<T>, block: () -> T): T =
         map.computeIfAbsent(key) { block() } as T

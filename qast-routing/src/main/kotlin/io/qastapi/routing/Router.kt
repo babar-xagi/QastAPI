@@ -107,7 +107,15 @@ class Router {
             is RouteMatchResult.NotFound -> {
                 val ctx = QastContext(request)
                 executePipeline(ctx) {
-                    throw NotFoundException("Route '${request.method.value} ${request.path}' not found")
+                    val suggestions = RouteSuggester.suggestRoutes(request.method, request.path, allRoutes())
+                    val isProd = io.qastapi.core.Environment.current().isProd()
+                    val msg = if (suggestions.isNotEmpty() && !isProd) {
+                        "Route '${request.method.value} ${request.path}' not found. Did you mean: ${suggestions.joinToString(", ")}?"
+                    } else {
+                        "Route '${request.method.value} ${request.path}' not found"
+                    }
+                    val details = if (suggestions.isNotEmpty()) mapOf("suggestions" to suggestions) else null
+                    throw NotFoundException(msg, details = details)
                 }
                 ctx.response
             }

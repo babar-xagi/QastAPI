@@ -8,7 +8,7 @@ This roadmap tracks the development progression of QastAPI. Full vision details 
 
 - [x] **Phase 0 — Vision & Architecture**: Core principles, repository setup, Gradle build logic, package structures.
 - [x] **Phase 1 — Core HTTP Framework**: Smallest usable production-grade HTTP framework with Netty & Sun engines, coroutines, full routing DSL, path/query params, JSON serialization, exceptions, testing framework, CLI (`init`, `dev`, `routes`, `doctor`), and examples.
-- [ ] **Phase 2 — Developer Experience**: Hot reload, structured dev logs, environment profiles.
+- [x] **Phase 2 — Developer Experience**: Minimal & modular project generator, hot reload (`DevWatcher`), dark-mode HTML developer error page & rich JSON errors, smart 404 route suggestions ("Did you mean?"), structured request logging (`PRETTY` & `JSON`), request correlation (`X-Request-ID`), enhanced `qast doctor` diagnostics, `qast app` submodule scaffolding, `qast add`/`remove` plugin system, cascading environment profiles (`qast.toml`, `qast.dev.toml`, `qast.prod.toml`).
 - [ ] **Phase 3 — Validation & OpenAPI**: KSP / compile-time validation, automatic Swagger UI, `/openapi.json`.
 - [ ] **Phase 4 — Database & ORM**: PostgreSQL connection pooling, migrations, type-safe query DSL, SQLite.
 - [ ] **Phase 5 — Auth & Admin**: JWT, sessions, roles/permissions, auto-generated admin dashboard.

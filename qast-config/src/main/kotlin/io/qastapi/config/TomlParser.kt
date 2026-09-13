@@ -8,16 +8,11 @@ package io.qastapi.config
  * - Key-value pairs: `key = "quoted string"`, `key = 'single-quoted'`
  * - Numerical literals: Integers, Longs, and Floating-point Doubles
  * - Booleans: `true` and `false` (case-insensitive)
- * - Single-line comments starting with `#`
+ * - Arrays: `["item1", "item2"]`, `[1, 2, 3]`
+ * - Comments: Full-line comments starting with `#` and inline comments (`key = "val" # comment`)
  * - Environment variable interpolation:
  *   - `${VAR}` (substituted from env or system properties)
  *   - `${VAR:-default}` or `${VAR:default}` (falls back to default value if unset)
- *
- * Non-supported full TOML features (to be handled in future phases if needed):
- * - Multi-line strings ("""...""")
- * - Array of tables (`[[table]]`)
- * - Inline tables (`key = { a = 1, b = 2 }`)
- * - Date/time literals (parsed as strings)
  */
 object TomlParser {
 
@@ -26,8 +21,8 @@ object TomlParser {
         var currentSection = "default"
 
         content.lines().forEach { rawLine ->
-            val line = rawLine.trim()
-            if (line.isEmpty() || line.startsWith("#")) {
+            val line = stripComments(rawLine)
+            if (line.isEmpty()) {
                 return@forEach
             }
 
@@ -48,6 +43,28 @@ object TomlParser {
         return result
     }
 
+    fun stripComments(line: String): String {
+        var inQuotes = false
+        var quoteChar = ' '
+        val sb = StringBuilder()
+        for (i in line.indices) {
+            val c = line[i]
+            if ((c == '"' || c == '\'') && (i == 0 || line[i - 1] != '\\')) {
+                if (inQuotes && c == quoteChar) {
+                    inQuotes = false
+                } else if (!inQuotes) {
+                    inQuotes = true
+                    quoteChar = c
+                }
+            }
+            if (c == '#' && !inQuotes) {
+                break
+            }
+            sb.append(c)
+        }
+        return sb.toString().trim()
+    }
+
     fun resolveEnvVars(value: String): String {
         val pattern = Regex("\\$\\{([a-zA-Z_][a-zA-Z0-9_]*)(?::-(.*?)|:(.*?))?\\}")
         return pattern.replace(value) { match ->
@@ -58,14 +75,48 @@ object TomlParser {
         }
     }
 
-    private fun parseValue(raw: String): Any {
+    fun parseValue(raw: String): Any {
         val trimmed = raw.trim()
+
+        // Array: ["a", "b", "c"]
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            val inner = trimmed.substring(1, trimmed.length - 1).trim()
+            if (inner.isEmpty()) return emptyList<Any>()
+
+            val elements = mutableListOf<String>()
+            val cur = StringBuilder()
+            var inQuotes = false
+            var quoteChar = ' '
+            for (i in inner.indices) {
+                val c = inner[i]
+                if ((c == '"' || c == '\'') && (i == 0 || inner[i - 1] != '\\')) {
+                    if (inQuotes && c == quoteChar) {
+                        inQuotes = false
+                    } else if (!inQuotes) {
+                        inQuotes = true
+                        quoteChar = c
+                    }
+                }
+                if (c == ',' && !inQuotes) {
+                    elements.add(cur.toString().trim())
+                    cur.clear()
+                } else {
+                    cur.append(c)
+                }
+            }
+            if (cur.isNotEmpty()) {
+                elements.add(cur.toString().trim())
+            }
+            return elements.filter { it.isNotEmpty() }.map { parseValue(it) }
+        }
+
         // String
         if ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
             (trimmed.startsWith("'") && trimmed.endsWith("'"))
         ) {
             return trimmed.substring(1, trimmed.length - 1)
         }
+
         // Boolean
         if (trimmed.equals("true", ignoreCase = true)) return true
         if (trimmed.equals("false", ignoreCase = true)) return false
