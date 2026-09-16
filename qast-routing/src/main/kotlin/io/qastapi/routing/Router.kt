@@ -66,6 +66,54 @@ class Router {
         return this
     }
 
+    fun register(controller: Any): Router {
+        val clazz = controller::class.java
+        for (method in clazz.declaredMethods) {
+            for (ann in method.annotations) {
+                val (httpMethod, path) = when (ann) {
+                    is Get -> HttpMethod.GET to ann.path
+                    is Post -> HttpMethod.POST to ann.path
+                    is Put -> HttpMethod.PUT to ann.path
+                    is Patch -> HttpMethod.PATCH to ann.path
+                    is Delete -> HttpMethod.DELETE to ann.path
+                    is Head -> HttpMethod.HEAD to ann.path
+                    is Options -> HttpMethod.OPTIONS to ann.path
+                    is HttpRoute -> HttpMethod.fromString(ann.method) to ann.path
+                    else -> continue
+                }
+
+                method.isAccessible = true
+                val paramTypes = method.parameterTypes
+                val isSuspend = paramTypes.isNotEmpty() &&
+                    kotlin.coroutines.Continuation::class.java.isAssignableFrom(paramTypes.last())
+
+                route(httpMethod, path) {
+                    try {
+                        if (isSuspend) {
+                            kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn { cont ->
+                                val args = when {
+                                    paramTypes.size == 1 -> arrayOf(cont)
+                                    paramTypes.size == 2 && QastContext::class.java.isAssignableFrom(paramTypes[0]) -> arrayOf(this, cont)
+                                    else -> arrayOf(cont)
+                                }
+                                method.invoke(controller, *args)
+                            }
+                        } else {
+                            when {
+                                paramTypes.isEmpty() -> method.invoke(controller)
+                                paramTypes.size == 1 && QastContext::class.java.isAssignableFrom(paramTypes[0]) -> method.invoke(controller, this)
+                                else -> method.invoke(controller)
+                            }
+                        }
+                    } catch (e: java.lang.reflect.InvocationTargetException) {
+                        throw e.targetException ?: e
+                    }
+                }
+            }
+        }
+        return this
+    }
+
     fun allRoutes(): List<Route> = routes.toList()
 
     fun match(method: HttpMethod, path: String): RouteMatchResult {

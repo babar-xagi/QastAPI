@@ -95,12 +95,35 @@ class QastApp(
         return this
     }
 
-    fun start(wait: Boolean = false): RunningServer {
+    fun register(controller: Any): QastApp {
+        router.register(controller)
+        return this
+    }
+
+    /**
+     * Starts the application server, blocking the calling thread until stopped.
+     * Matches the FastAPI / Flask `app.run()` convention.
+     */
+    fun run(port: Int? = null, host: String? = null, wait: Boolean = true): RunningServer {
+        val serverConfig = if (port != null || host != null) {
+            val newCfg = config.server.copy(
+                port = port ?: config.server.port,
+                host = host ?: config.server.host
+            )
+            engine = HttpEngineFactory.create(newCfg)
+            newCfg
+        } else {
+            config.server
+        }
+        return start(serverConfig = serverConfig, wait = wait)
+    }
+
+    fun start(serverConfig: ServerConfig = config.server, wait: Boolean = false): RunningServer {
         var server: RunningServer? = null
 
         runBlocking {
             lifecycle.start {
-                server = engine.start(config.server) { request ->
+                server = engine.start(serverConfig) { request ->
                     router.handle(request)
                 }
                 runningServer = server
