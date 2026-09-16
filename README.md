@@ -11,19 +11,21 @@ A minimal QastAPI server takes just a few lines:
 ```kotlin
 package com.example
 
-import io.qastapi.QastAPI
+import io.qastapi.*
+
+val app = qastapi()
 
 fun main() {
-    QastAPI {
-        get("/") {
-            mapOf("message" to "Hello QastAPI!", "status" to "healthy")
-        }
-
-        get("/users/{id}") {
-            val id = path("id")
-            mapOf("id" to id, "name" to "User $id")
-        }
+    app.get("/") {
+        mapOf("message" to "Hello QastAPI!", "status" to "healthy")
     }
+
+    app.get("/users/{id}") {
+        val id = path("id")
+        mapOf("id" to id, "name" to "User $id")
+    }
+
+    app.run()
 }
 ```
 

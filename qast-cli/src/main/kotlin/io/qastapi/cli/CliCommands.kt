@@ -20,42 +20,46 @@ object CliCommands {
             """
             package com.example
 
-            import io.qastapi.QastAPI
+            import io.qastapi.*
             import com.example.users.registerUsersApp
 
-            fun main() {
-                QastAPI {
-                    get("/") {
-                        mapOf("message" to "Hello QastAPI!", "status" to "healthy")
-                    }
+            val app = qastapi()
 
-                    // Register modular apps
-                    registerUsersApp()
+            fun main() {
+                app.get("/") {
+                    mapOf("message" to "Hello QastAPI!", "status" to "healthy")
                 }
+
+                // Register modular apps
+                app.registerUsersApp()
+
+                app.run()
             }
             """.trimIndent()
         } else {
             """
             package com.example
 
-            import io.qastapi.QastAPI
+            import io.qastapi.*
+
+            val app = qastapi()
 
             fun main() {
-                QastAPI {
-                    get("/") {
-                        mapOf("message" to "Hello QastAPI!", "status" to "healthy")
-                    }
-
-                    get("/users/{id}") {
-                        val id = path("id")
-                        mapOf("id" to id, "name" to "User ${'$'}id")
-                    }
-
-                    post("/echo") {
-                        val body = bodyText()
-                        mapOf("echo" to body)
-                    }
+                app.get("/") {
+                    mapOf("message" to "Hello QastAPI!", "status" to "healthy")
                 }
+
+                app.get("/users/{id}") {
+                    val id = path("id")
+                    mapOf("id" to id, "name" to "User ${'$'}id")
+                }
+
+                app.post("/echo") {
+                    val body = bodyText()
+                    mapOf("echo" to body)
+                }
+
+                app.run()
             }
             """.trimIndent()
         }
